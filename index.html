@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>朱子学OS感染度チェック - 36問診断（受講生限定）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        /* パスワード画面のスタイル */
+        .password-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .password-screen h1 {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .password-screen p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .password-input-group {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .password-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+        
+        .password-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .password-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .password-error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .lock-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        /* 診断画面（最初は非表示） */
+        .main-content {
+            display: none;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 30px;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        .questionnaire {
+            padding: 30px;
+        }
+        
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .question-text {
+            font-size: 18px;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .option {
+            flex: 1;
+            min-width: 80px;
+            padding: 15px 10px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .option.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .option-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .option-label {
+            font-size: 11px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-prev {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-prev:hover:not(:disabled) {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+        
+        .btn-next, .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-next:hover:not(:disabled), .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            padding: 30px;
+            display: none;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 500px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .results-table {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .results-table h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result-label {
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .result-value {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .score-high { color: #e74c3c; }
+        .score-medium { color: #f39c12; }
+        .score-low { color: #27ae60; }
+        
+        .total-score {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .total-score h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .total-score .score {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        
+        .diagnosis {
+            margin-top: 10px;
+            font-size: 16px;
+            opacity: 0.95;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn-restart, .btn-save {
+            flex: 1;
+            padding: 15px;
+        }
+        
+        .btn-restart {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-restart:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .options {
+                flex-direction: column;
+            }
+            
+            .option {
+                min-width: 100%;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- パスワード入力画面 -->
+        <div class="password-screen" id="passwordScreen">
+            <div class="lock-icon">🔒</div>
+            <h1>受講生限定コンテンツ</h1>
+            <p>このコンテンツは「自分2.0 OS講座」受講生専用です。<br>講座でお伝えしたパスワードを入力してください。</p>
+            
+            <div class="password-input-group">
+                <input 
+                    type="password" 
+                    id="passwordInput" 
+                    class="password-input" 
+                    placeholder="パスワードを入力"
+                    onkeypress="if(event.key==='Enter') checkPassword()"
+                >
+                <button class="password-button" onclick="checkPassword()">
+                    診断を開始する 🚀
+                </button>
+                <div class="password-error" id="passwordError">
+                    ❌ パスワードが正しくありません
+                </div>
+            </div>
+        </div>
+        
+        <!-- メインコンテンツ（診断画面） -->
+        <div class="main-content" id="mainContent">
+            <div class="header">
+                <h1>📊 朱子学OS感染度チェック</h1>
+                <p>36問の質問に答えて、あなたの朱子学OS感染度を測定します</p>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">質問 1 / 36</div>
+            
+            <div class="questionnaire" id="questionnaire">
+                <div class="question-card">
+                    <div class="question-number" id="questionNumber">質問 1</div>
+                    <div class="question-text" id="questionText"></div>
+                    
+                    <div class="options">
+                        <div class="option" onclick="selectOption(1)">
+                            <div class="option-number">1</div>
+                            <div class="option-label">全くない</div>
+                        </div>
+                        <div class="option" onclick="selectOption(2)">
+                            <div class="option-number">2</div>
+                            <div class="option-label">たまにある</div>
+                        </div>
+                        <div class="option" onclick="selectOption(3)">
+                            <div class="option-number">3</div>
+                            <div class="option-label">時々ある</div>
+                        </div>
+                        <div class="option" onclick="selectOption(4)">
+                            <div class="option-number">4</div>
+                            <div class="option-label">よくある</div>
+                        </div>
+                        <div class="option" onclick="selectOption(5)">
+                            <div class="option-number">5</div>
+                            <div class="option-label">常にある</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nav-buttons">
+                    <button class="btn-prev" onclick="prevQuestion()" id="btnPrev" disabled>
+                        ← 前の質問
+                    </button>
+                    <button class="btn-next" onclick="nextQuestion()" id="btnNext" disabled>
+                        次の質問 →
+                    </button>
+                    <button class="btn-submit" onclick="submitAnswers()" id="btnSubmit" style="display:none;" disabled>
+                        結果を見る 🎯
+                    </button>
+                </div>
+            </div>
+            
+            <div class="results" id="results">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #333;">診断結果</h2>
+                
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                
+                <div class="results-table">
+                    <h3>📈 カテゴリー別結果</h3>
+                    <div class="result-row">
+                        <span class="result-label">① 権威服従（6問）</span>
+                        <span class="result-value" id="result1"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">② 集団同調（6問）</span>
+                        <span class="result-value" id="result2"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">③ 課題の混同（6問）</span>
+                        <span class="result-value" id="result3"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">④ 自責・低自己肯定感（6問）</span>
+                        <span class="result-value" id="result4"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">⑤ 完璧主義・評価依存（6問）</span>
+                        <span class="result-value" id="result5"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">⑥ 認知の硬直性（6問）</span>
+                        <span class="result-value" id="result6"></span>
+                    </div>
+                </div>
+                
+                <div class="total-score">
+                    <h2>総合スコア</h2>
+                    <div class="score" id="totalScore">0</div>
+                    <div class="diagnosis" id="diagnosis"></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn-restart" onclick="restart()">🔄 もう一度診断する</button>
+                    <button class="btn-save" onclick="saveChart()">💾 結果を画像保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // パスワード認証
+        const correctPassword = 'jibun2024';
+        
+        function checkPassword() {
+            const input = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('passwordError');
+            
+            if (input === correctPassword) {
+                // 認証成功
+                document.getElementById('passwordScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                init();
+            } else {
+                // 認証失敗
+                errorMsg.style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+                
+                // 3秒後にエラーメッセージを非表示
+                setTimeout(() => {
+                    errorMsg.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // 36問の厳選された質問データ（朱子学OSど真ん中のみ）
+        const questionsBase = [
+            // カテゴリー1: 権威服従（6問）
+            { text: "親や上司の期待に応えられないと、強い罪悪感を感じる", category: 1 },
+            { text: "目上の人の意見には、疑問があっても従うべきだと思う", category: 1 },
+            { text: "年長者や上司に意見することは、失礼だと感じる", category: 1 },
+            { text: "「親の恩」「会社の恩」を返さなければならないというプレッシャーを感じる", category: 1 },
+            { text: "親孝行は絶対にすべきだと思う", category: 1 },
+            { text: "上司や先輩の指示には、理不尽だと感じても「はい」と答えてしまう", category: 1 },
+            
+            // カテゴリー2: 集団同調（6問）
+            { text: "自分の意見よりも、その場の空気や周りの意見を優先してしまう", category: 2 },
+            { text: "和を乱すくらいなら、自分が我慢する方を選ぶ", category: 2 },
+            { text: "「皆がやっている」ことには、疑問があっても従った方が良いと思う", category: 2 },
+            { text: "周りと違うことをすると、浮いてしまうのではないかと不安になる", category: 2 },
+            { text: "「常識」や「世間体」を気にして、行動を制限してしまう", category: 2 },
+            { text: "多数派の意見に反対することが、とても難しい", category: 2 },
+            
+            // カテゴリー3: 課題の混同（6問）
+            { text: "家族や友人の機嫌が悪いと、自分のせいだと感じてしまう", category: 3 },
+            { text: "親の老後や幸せは、自分が責任を持つべきだと思う", category: 3 },
+            { text: "他人の問題を、自分が解決しなければならないと感じる", category: 3 },
+            { text: "「家族のために」「会社のために」と、自分の人生を後回しにする", category: 3 },
+            { text: "相手の期待に応えられないことに、強い責任を感じる", category: 3 },
+            { text: "他人からの評価で、自分の価値が決まると感じる", category: 3 },
+            
+            // カテゴリー4: 自責・低自己肯定感（6問）
+            { text: "何かうまくいかないとき、まず「自分の努力不足」だと考える", category: 4 },
+            { text: "他人に迷惑をかけることを、極度に恐れている", category: 4 },
+            { text: "失敗すると、自分の能力や人格まで否定してしまう", category: 4 },
+            { text: "自分の存在が、誰かの負担になっているのではないかと心配になる", category: 4 },
+            { text: "「自分さえ我慢すれば」と考えて、苦しい状況を受け入れてしまう", category: 4 },
+            { text: "辛い状況でも「逃げるのは甘え」だと思い、耐え続けてしまう", category: 4 },
+            
+            // カテゴリー5: 完璧主義・評価依存（6問）
+            { text: "70点の成果では満足できず、常に100点を目指してしまう", category: 5 },
+            { text: "「ちゃんとできていない」自分を受け入れられない", category: 5 },
+            { text: "休むことや手を抜くことに、罪悪感を感じる", category: 5 },
+            { text: "「できない自分」「弱い自分」を他人に見せたくない", category: 5 },
+            { text: "他人から認められないと、自分の存在意義を見出せない", category: 5 },
+            { text: "「役に立たない自分」は存在する価値がないと思う", category: 5 },
+            
+            // カテゴリー6: 認知の硬直性（6問）
+            { text: "物事を「正しい/間違い」「○/×」の二択で判断してしまう", category: 6 },
+            { text: "一度「これが正しい」と思うと、他の可能性を考えられなくなる", category: 6 },
+            { text: "「〜すべき」「〜ねばならない」という考え方に縛られている", category: 6 },
+            { text: "物事を多面的に見ることが難しく、一つの視点に固執してしまう", category: 6 },
+            { text: "「こうあるべき」という理想と現実のギャップに苦しむ", category: 6 },
+            { text: "計画通りに進まないと、強い不安やイライラを感じる", category: 6 }
+        ];
+        
+        // 質問をシャッフル
+        let questions = [];
+        let questionOrder = [];
+        let currentQuestion = 0;
+        let answers = new Array(36).fill(0);
+        let radarChart = null;
+        
+        // Fisher-Yatesシャッフルアルゴリズム
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+        
+        // 初期化
+        function init() {
+            // 質問をシャッフル
+            questions = shuffleArray(questionsBase);
+            showQuestion(0);
+        }
+        
+        // 質問を表示
+        function showQuestion(index) {
+            currentQuestion = index;
+            document.getElementById('questionNumber').textContent = `質問 ${index + 1}`;
+            document.getElementById('questionText').textContent = questions[index].text;
+            document.getElementById('progressText').textContent = `質問 ${index + 1} / 36`;
+            document.getElementById('progressFill').style.width = `${((index + 1) / 36) * 100}%`;
+            
+            // 選択状態をリセット
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            // 既に回答済みの場合は選択状態を復元
+            if (answers[index] > 0) {
+                options[answers[index] - 1].classList.add('selected');
+            }
+            
+            // ボタンの状態を更新
+            updateButtons();
+        }
+        
+        // 選択肢を選択
+        function selectOption(value) {
+            answers[currentQuestion] = value;
+            
+            // 選択状態を更新
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            options[value - 1].classList.add('selected');
+            
+            // ボタンの状態を更新
+            updateButtons();
+        }
+        
+        // ボタンの状態を更新
+        function updateButtons() {
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            const btnSubmit = document.getElementById('btnSubmit');
+            
+            btnPrev.disabled = currentQuestion === 0;
+            
+            if (currentQuestion === 35) {
+                btnNext.style.display = 'none';
+                btnSubmit.style.display = 'block';
+                btnSubmit.disabled = answers[currentQuestion] === 0;
+            } else {
+                btnNext.style.display = 'block';
+                btnSubmit.style.display = 'none';
+                btnNext.disabled = answers[currentQuestion] === 0;
+            }
+        }
+        
+        // 前の質問へ
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                showQuestion(currentQuestion - 1);
+            }
+        }
+        
+        // 次の質問へ
+        function nextQuestion() {
+            if (currentQuestion < 35 && answers[currentQuestion] > 0) {
+                showQuestion(currentQuestion + 1);
+            }
+        }
+        
+        // 回答を集計して結果を表示
+        function submitAnswers() {
+            // カテゴリー別に集計
+            const categoryScores = [0, 0, 0, 0, 0, 0];
+            questions.forEach((q, i) => {
+                categoryScores[q.category - 1] += answers[i];
+            });
+            
+            // 画面を切り替え
+            document.getElementById('questionnaire').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            // レーダーチャートを生成
+            createRadarChart(categoryScores);
+            
+            // 結果を表示
+            displayResults(categoryScores);
+            
+            // ページトップにスクロール
+            window.scrollTo(0, 0);
+        }
+        
+        // レーダーチャート生成
+        function createRadarChart(scores) {
+            const ctx = document.getElementById('radarChart');
+            
+            if (radarChart) {
+                radarChart.destroy();
+            }
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['権威服従', '集団同調', '課題の混同', '自責・低自己肯定感', '完璧主義・評価依存', '認知の硬直性'],
+                    datasets: [{
+                        label: 'あなたのスコア',
+                        data: scores,
+                        fill: true,
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: 'rgb(102, 126, 234)',
+                        pointBackgroundColor: 'rgb(102, 126, 234)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(102, 126, 234)',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 30,
+                            ticks: {
+                                stepSize: 6,
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 結果を表示
+        function displayResults(scores) {
+            const total = scores.reduce((sum, score) => sum + score, 0);
+            
+            // カテゴリー別結果
+            scores.forEach((score, i) => {
+                const percentage = (score / 30 * 100).toFixed(0);
+                const elem = document.getElementById(`result${i + 1}`);
+                elem.textContent = `${score}/30点 (${percentage}%)`;
+                
+                if (percentage >= 80) {
+                    elem.className = 'result-value score-high';
+                } else if (percentage >= 60) {
+                    elem.className = 'result-value score-medium';
+                } else {
+                    elem.className = 'result-value score-low';
+                }
+            });
+            
+            // 総合スコア（180点満点）
+            document.getElementById('totalScore').textContent = `${total} / 180`;
+            
+            // 診断メッセージ
+            let diagnosis = '';
+            if (total >= 144) {
+                diagnosis = '🔴 危険領域 - 早急なOSアップデートが必要です';
+            } else if (total >= 108) {
+                diagnosis = '🟠 警戒領域 - 意識的なOS入れ替えが推奨されます';
+            } else if (total >= 72) {
+                diagnosis = '🟡 注意領域 - 予防的なアプローチが有効です';
+            } else if (total >= 36) {
+                diagnosis = '🟢 安全領域 - 比較的健全な状態です';
+            } else {
+                diagnosis = '⚪ 理想領域 - 素晴らしい状態です！';
+            }
+            document.getElementById('diagnosis').textContent = diagnosis;
+        }
+        
+        // 最初からやり直す
+        function restart() {
+            currentQuestion = 0;
+            answers = new Array(36).fill(0);
+            document.getElementById('questionnaire').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            // 再シャッフル
+            questions = shuffleArray(questionsBase);
+            showQuestion(0);
+            window.scrollTo(0, 0);
+        }
+        
+        // 結果を画像保存
+        function saveChart() {
+            const canvas = document.getElementById('radarChart');
+            const url = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = '朱子学OS感染度診断結果.png';
+            link.href = url;
+            link.click();
+            alert('診断結果を画像として保存しました！');
+        }
+    </script>
+</body>
+</html>
