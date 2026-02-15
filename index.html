@@ -149,29 +149,29 @@
         }
         
         .questionnaire {
-            padding: 30px;
+            padding: 20px;
         }
         
         .question-card {
             background: #f8f9fa;
             border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
             border-left: 5px solid #667eea;
         }
         
         .question-number {
             color: #667eea;
             font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 10px;
+            font-size: 13px;
+            margin-bottom: 8px;
         }
         
         .question-text {
-            font-size: 18px;
+            font-size: 16px;
             color: #333;
-            line-height: 1.6;
-            margin-bottom: 20px;
+            line-height: 1.5;
+            margin-bottom: 15px;
         }
         
         .options {
@@ -182,8 +182,8 @@
         
         .option {
             flex: 1;
-            min-width: 80px;
-            padding: 15px 10px;
+            min-width: 70px;
+            padding: 12px 8px;
             border: 2px solid #ddd;
             border-radius: 10px;
             text-align: center;
@@ -206,27 +206,27 @@
         }
         
         .option-number {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .option-label {
-            font-size: 11px;
+            font-size: 10px;
         }
         
         .nav-buttons {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             justify-content: space-between;
-            margin-top: 30px;
+            margin-top: 15px;
         }
         
         button {
-            padding: 15px 30px;
+            padding: 12px 20px;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
@@ -268,7 +268,7 @@
             height: 500px;
             background: #f8f9fa;
             border-radius: 15px;
-            padding: 20px;
+            padding: 30px;
             margin-bottom: 30px;
         }
         
@@ -337,11 +337,22 @@
         .action-buttons {
             display: flex;
             gap: 15px;
+            flex-wrap: wrap;
         }
         
-        .btn-restart, .btn-save {
+        .btn-restart, .btn-save, .btn-submit-result {
             flex: 1;
             padding: 15px;
+            min-width: 200px;
+        }
+        
+        .btn-submit-result {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-submit-result:hover {
+            background: #229954;
         }
         
         .btn-restart {
@@ -359,16 +370,62 @@
         }
         
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .questionnaire {
+                padding: 15px;
+            }
+            
+            .question-card {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+            
+            .question-text {
+                font-size: 15px;
+                margin-bottom: 12px;
+            }
+            
             .options {
-                flex-direction: column;
+                gap: 8px;
             }
             
             .option {
-                min-width: 100%;
+                min-width: 60px;
+                padding: 10px 5px;
+            }
+            
+            .option-number {
+                font-size: 18px;
+            }
+            
+            .option-label {
+                font-size: 9px;
+            }
+            
+            .nav-buttons {
+                margin-top: 12px;
+                gap: 8px;
+            }
+            
+            button {
+                padding: 10px 15px;
+                font-size: 14px;
             }
             
             .chart-container {
-                height: 400px;
+                height: 350px;
+                padding: 20px 15px;
             }
         }
     </style>
@@ -494,6 +551,7 @@
                 </div>
                 
                 <div class="action-buttons">
+                    <button class="btn-submit-result" onclick="submitToGoogleSheets()" id="btnSubmitResult">📤 結果を送信する</button>
                     <button class="btn-restart" onclick="restart()">🔄 もう一度診断する</button>
                     <button class="btn-save" onclick="saveChart()">💾 結果を画像保存</button>
                 </div>
@@ -720,6 +778,14 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 20,
+                            right: 20,
+                            bottom: 20,
+                            left: 20
+                        }
+                    },
                     scales: {
                         r: {
                             min: 0,
@@ -728,13 +794,15 @@
                                 stepSize: 6,
                                 font: {
                                     size: 12
-                                }
+                                },
+                                backdropPadding: 5
                             },
                             pointLabels: {
                                 font: {
-                                    size: 14,
+                                    size: 13,
                                     weight: 'bold'
-                                }
+                                },
+                                padding: 15
                             }
                         }
                     },
@@ -799,13 +867,114 @@
         
         // 結果を画像保存
         function saveChart() {
-            const canvas = document.getElementById('radarChart');
-            const url = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.download = '朱子学OS感染度診断結果.png';
-            link.href = url;
-            link.click();
-            alert('診断結果を画像として保存しました！');
+            try {
+                const canvas = document.getElementById('radarChart');
+                
+                // Canvasが存在するか確認
+                if (!canvas) {
+                    alert('エラー: グラフが見つかりません');
+                    return;
+                }
+                
+                // toBlob を使用（より確実）
+                canvas.toBlob(function(blob) {
+                    if (!blob) {
+                        alert('画像の生成に失敗しました');
+                        return;
+                    }
+                    
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = '朱子学OS感染度診断結果.png';
+                    link.href = url;
+                    link.click();
+                    
+                    // メモリを解放
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                    
+                    alert('診断結果を画像として保存しました！');
+                }, 'image/png');
+                
+            } catch (error) {
+                console.error('画像保存エラー:', error);
+                alert('画像の保存に失敗しました。スクリーンショットをお試しください。');
+            }
+        }
+        
+        // Google Apps ScriptのWebアプリURL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzx8hfTW-R3W-447s9y8GZ6kAWE9WN-vdIdgPQy_dZqi9FA5_lrc9mGEgwM18ja-0S7/exec';
+        
+        // 結果をGoogleスプレッドシートに送信
+        async function submitToGoogleSheets() {
+            const btn = document.getElementById('btnSubmitResult');
+            
+            // 名前を入力させる
+            const name = prompt('お名前を入力してください:');
+            if (!name || name.trim() === '') {
+                alert('名前が入力されていません。');
+                return;
+            }
+            
+            // ボタンを無効化
+            btn.disabled = true;
+            btn.textContent = '送信中...';
+            
+            try {
+                // カテゴリー別スコアを計算
+                const categoryScores = [0, 0, 0, 0, 0, 0];
+                questions.forEach((q, i) => {
+                    categoryScores[q.category - 1] += answers[i];
+                });
+                
+                const total = categoryScores.reduce((sum, score) => sum + score, 0);
+                
+                // 診断レベルを取得
+                let diagnosis = '';
+                if (total >= 144) {
+                    diagnosis = '🔴 危険領域';
+                } else if (total >= 108) {
+                    diagnosis = '🟠 警戒領域';
+                } else if (total >= 72) {
+                    diagnosis = '🟡 注意領域';
+                } else if (total >= 36) {
+                    diagnosis = '🟢 安全領域';
+                } else {
+                    diagnosis = '⚪ 理想領域';
+                }
+                
+                // データを送信
+                const data = {
+                    name: name.trim(),
+                    score1: categoryScores[0],
+                    score2: categoryScores[1],
+                    score3: categoryScores[2],
+                    score4: categoryScores[3],
+                    score5: categoryScores[4],
+                    score6: categoryScores[5],
+                    total: total,
+                    diagnosis: diagnosis
+                };
+                
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                // 成功メッセージ
+                alert('✅ 診断結果を送信しました!\n\n講師が確認できるようになりました。');
+                btn.textContent = '✅ 送信完了';
+                btn.style.background = '#95a5a6';
+                
+            } catch (error) {
+                console.error('送信エラー:', error);
+                alert('送信に失敗しました。もう一度お試しください。');
+                btn.disabled = false;
+                btn.textContent = '📤 結果を送信する';
+            }
         }
     </script>
 </body>
